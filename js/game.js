@@ -294,7 +294,7 @@
     setSuggest([]);
     els.error.hidden = true;
     drawPlanet(city, null, round.best, false);
-    els.next.textContent = state.index === ROUNDS - 1 ? "See the tunnels" : "Next city";
+    els.next.textContent = state.index === ROUNDS - 1 ? "See scores" : "Next city";
     els.input.focus();
   }
 
@@ -381,13 +381,13 @@
     if (!guess) {
       els.error.hidden = false;
       els.error.textContent = typed
-        ? "That city isn’t in the atlas. Pick a larger one from the list."
-        : "Name a city, then send it through.";
+        ? "That city isn’t in the list. Try a larger one."
+        : "Name a city first.";
       return;
     }
     if (guess.id === state.rounds[state.index].city.id) {
       els.error.hidden = false;
-      els.error.textContent = "That’s this side. Name the city that comes out the other end.";
+      els.error.textContent = "That’s this city. Name the one on the other side.";
       return;
     }
     reveal(guess, false);
@@ -401,10 +401,10 @@
     if (best && best.guess) {
       els.finaleLine.textContent =
         hits >= 4
-          ? `You found ${hits} near-antipodes. Best tunnel: ${best.from.name} → ${best.guess.name}.`
-          : `Best tunnel: ${best.from.name} → ${best.guess.name}. The planet is mostly water; that’s the whole joke.`;
+          ? `You got ${hits} cities right. Best round: ${best.from.name} → ${best.guess.name}.`
+          : `Best round: ${best.from.name} → ${best.guess.name}.`;
     } else {
-      els.finaleLine.textContent = "Eight empty boreholes. Try again — the atlas is patient.";
+      els.finaleLine.textContent = "No guesses this time.";
     }
 
     els.tunnels.innerHTML = "";

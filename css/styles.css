@@ -15,7 +15,6 @@
   --danger: #a63d32;
   --focus: #c17f3a;
   --display: "Geologica", "Avenir Next", "Segoe UI", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --space: clamp(1.15rem, 3vw, 2rem);
   --max: 42rem;
 }
@@ -106,11 +105,8 @@ body {
 .verdict,
 .guess-error,
 .tunnel-meta {
-  font-family: var(--mono);
-  font-size: 0.72rem;
+  font-size: 0.92rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--muted);
 }
 
@@ -142,10 +138,9 @@ body {
 .how {
   margin: 1.75rem 0 2rem;
   max-width: 28rem;
-  text-transform: none;
-  letter-spacing: 0.01em;
-  line-height: 1.55;
-  font-size: 0.78rem;
+  line-height: 1.5;
+  font-size: 0.95rem;
+  font-weight: 400;
 }
 
 .intro-planet {
@@ -156,11 +151,8 @@ body {
 
 .intro-pole {
   margin: 0;
-  font-family: var(--mono);
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--muted);
   text-align: center;
 }
@@ -218,7 +210,6 @@ body {
   font-family: var(--display);
   font-size: 0.95rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
   cursor: pointer;
 }
 
@@ -240,11 +231,9 @@ body {
   background: none;
   padding: 0.4rem 0;
   color: var(--glacier-deep);
-  font-family: var(--mono);
-  font-size: 0.72rem;
+  font-family: var(--display);
+  font-size: 0.95rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 0.25em;
@@ -401,18 +390,14 @@ body {
 }
 
 .suggest-item span {
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.85rem;
+  font-weight: 400;
   color: var(--muted);
 }
 
 .guess-error {
   margin: 0.65rem 0 0;
   color: var(--danger);
-  text-transform: none;
-  letter-spacing: 0.02em;
 }
 
 .guess-actions {
@@ -430,11 +415,10 @@ body {
 
 .verdict {
   margin: 1.1rem 0 0;
-  text-transform: none;
-  letter-spacing: 0.02em;
-  line-height: 1.55;
+  line-height: 1.5;
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: 1rem;
+  font-weight: 400;
 }
 
 .score-break {
@@ -450,11 +434,8 @@ body {
   gap: 1rem;
   padding: 0.28rem 0;
   border-bottom: 1px solid var(--line);
-  font-family: var(--mono);
-  font-size: 0.72rem;
+  font-size: 0.92rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--copper-deep);
 }
 
@@ -486,10 +467,9 @@ body {
 
 .finale-line {
   margin: 0 0 2rem;
-  text-transform: none;
-  letter-spacing: 0.02em;
   line-height: 1.5;
   color: var(--ink);
+  font-weight: 400;
 }
 
 .tunnels {
@@ -515,16 +495,14 @@ body {
 
 .tunnel-pts {
   margin: 0;
-  font-family: var(--mono);
-  font-size: 0.8rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--copper-deep);
 }
 
 .tunnel-meta {
   grid-column: 1 / -1;
   margin: 0;
-  text-transform: none;
-  letter-spacing: 0.02em;
 }
 
 .finale-actions {
