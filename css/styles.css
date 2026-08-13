@@ -437,6 +437,31 @@ body {
   font-size: 0.8rem;
 }
 
+.score-break {
+  list-style: none;
+  margin: 1rem auto 0;
+  padding: 0;
+  max-width: 14rem;
+}
+
+.score-break li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.28rem 0;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper-deep);
+}
+
+.score-break li.is-miss {
+  color: var(--muted);
+}
+
 .points {
   margin: 0.85rem 0 1.35rem;
   font-size: clamp(1.6rem, 4vw, 2rem);
