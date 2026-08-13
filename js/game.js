@@ -318,9 +318,9 @@
 
   function renderScoreBreak(tally) {
     const rows = [
+      ["Distance", tally.parts.distance],
       ["Continent", tally.parts.continent],
       ["Country", tally.parts.country],
-      ["City", tally.parts.city],
     ];
     els.scoreBreak.innerHTML = "";
     rows.forEach(([label, value]) => {
@@ -333,7 +333,10 @@
 
   function reveal(guess, skipped) {
     const round = state.rounds[state.index];
-    const tally = skipped || !guess ? Geo.emptyScore() : Geo.scoreGuess(guess, round.best);
+    const tally =
+      skipped || !guess
+        ? Geo.emptyScore()
+        : Geo.scoreGuess(guess, round.best, round.antipode);
     const official = round.best;
 
     state.score += tally.points;

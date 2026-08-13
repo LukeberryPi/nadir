@@ -33,49 +33,76 @@ describe("atlas", () => {
 });
 
 describe("scoring", () => {
-  test("exact city scores 1,000", () => {
+  test("distance outweighs continent and country baselines", () => {
+    expect(Geo.POINTS.distance).toBeGreaterThan(
+      Geo.POINTS.continent + Geo.POINTS.country
+    );
+    expect(Geo.MAX_ROUND).toBe(
+      Geo.POINTS.distance + Geo.POINTS.continent + Geo.POINTS.country
+    );
+  });
+
+  test("exact city scores 1,000, mostly from distance", () => {
     const chicago = city("Chicago");
     const perth = city("Perth");
-    const tally = Geo.scoreGuess(perth, nearest(chicago).city);
+    const tally = Geo.scoreGuess(perth, nearest(chicago).city, Geo.antipode(chicago));
     expect(tally.city).toBe(true);
     expect(tally.country).toBe(true);
     expect(tally.continent).toBe(true);
+    expect(tally.parts.distance).toBe(Geo.POINTS.distance);
+    expect(tally.parts.continent).toBe(Geo.POINTS.continent);
+    expect(tally.parts.country).toBe(Geo.POINTS.country);
     expect(tally.points).toBe(Geo.MAX_ROUND);
   });
 
-  test("same country, wrong city scores continent + country", () => {
-    const perth = city("Perth");
+  test("same country adds a baseline and keeps distance in play", () => {
+    const chicago = city("Chicago");
+    const perth = nearest(chicago).city;
     const adelaide = city("Adelaide");
-    const tally = Geo.scoreGuess(adelaide, perth);
+    const tally = Geo.scoreGuess(adelaide, perth, Geo.antipode(chicago));
     expect(tally.city).toBe(false);
     expect(tally.country).toBe(true);
     expect(tally.continent).toBe(true);
-    expect(tally.points).toBe(Geo.POINTS.continent + Geo.POINTS.country);
+    expect(tally.parts.continent).toBe(Geo.POINTS.continent);
+    expect(tally.parts.country).toBe(Geo.POINTS.country);
+    expect(tally.parts.distance).toBeGreaterThan(0);
+    expect(tally.parts.distance).toBeLessThan(Geo.POINTS.distance);
+    expect(tally.points).toBeLessThan(Geo.MAX_ROUND);
+    expect(tally.parts.distance).toBeGreaterThan(
+      tally.parts.continent + tally.parts.country
+    );
   });
 
-  test("same continent, wrong country scores continent only", () => {
-    const perth = city("Perth");
+  test("same continent, wrong country scores a smaller baseline", () => {
+    const chicago = city("Chicago");
+    const perth = nearest(chicago).city;
     const auckland = city("Auckland");
-    const tally = Geo.scoreGuess(auckland, perth);
+    const tally = Geo.scoreGuess(auckland, perth, Geo.antipode(chicago));
     expect(tally.country).toBe(false);
     expect(tally.continent).toBe(true);
-    expect(tally.points).toBe(Geo.POINTS.continent);
+    expect(tally.parts.country).toBe(0);
+    expect(tally.parts.continent).toBe(Geo.POINTS.continent);
+    expect(tally.points).toBe(tally.parts.distance + Geo.POINTS.continent);
   });
 
-  test("wrong continent scores nothing", () => {
-    const perth = city("Perth");
+  test("wrong continent scores distance only", () => {
+    const chicago = city("Chicago");
+    const perth = nearest(chicago).city;
     const lima = city("Lima");
-    const tally = Geo.scoreGuess(lima, perth);
-    expect(tally.points).toBe(0);
+    const tally = Geo.scoreGuess(lima, perth, Geo.antipode(chicago));
     expect(tally.continent).toBe(false);
+    expect(tally.parts.continent).toBe(0);
+    expect(tally.parts.country).toBe(0);
+    expect(tally.points).toBe(tally.parts.distance);
   });
 
   test("Honolulu counts as Oceania", () => {
     const honolulu = city("Honolulu");
     const perth = city("Perth");
     expect(honolulu.continent).toBe("Oceania");
-    expect(Geo.scoreGuess(honolulu, perth).continent).toBe(true);
-    expect(Geo.scoreGuess(honolulu, perth).country).toBe(false);
+    const tally = Geo.scoreGuess(honolulu, perth, Geo.antipode(city("Chicago")));
+    expect(tally.continent).toBe(true);
+    expect(tally.country).toBe(false);
   });
 });
 
