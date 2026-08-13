@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Nadir — name the city through the planet</title>
+    <title>Nadir — name the opposite city</title>
     <meta
       name="description"
       content="A city is named. You name the city that sits most opposite, through the Earth."
@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/styles.css" />
@@ -23,15 +23,15 @@
 
     <main id="main" class="app">
       <section class="screen screen-intro" id="screen-intro" data-screen="intro">
-        <p class="eyebrow">A game of antipodes</p>
+        <p class="eyebrow">Guess the opposite city</p>
         <h1 class="wordmark">Nadir</h1>
         <p class="lede">
-          A city is named. You name the city that sits most opposite —
-          twelve thousand kilometres through rock, nickel, and heat.
+          A city is named. You name the city that sits most opposite,
+          twelve thousand kilometres through the Earth.
         </p>
 
         <div class="intro-planet" aria-hidden="true">
-          <p class="intro-pole intro-pole-top">this side</p>
+          <p class="intro-pole intro-pole-top">this city</p>
           <svg class="planet-svg" viewBox="0 0 320 320" role="img">
             <defs>
               <radialGradient id="coreGlowIntro" cx="42%" cy="40%" r="70%">
@@ -52,12 +52,13 @@
             <circle cx="160" cy="28" r="5" fill="#E4EBEE" />
             <circle cx="160" cy="292" r="5" fill="#E4EBEE" />
           </svg>
-          <p class="intro-pole intro-pole-bottom">the far side</p>
+          <p class="intro-pole intro-pole-bottom">opposite</p>
         </div>
 
         <p class="how">
-          Continent, then country, then the city. The opposite city is the
-          nearest in the atlas to the true antipode. Naming it scores 1,000.
+          Most of the score is how close you get to the other side of the Earth.
+          The right continent and country add a few points. Naming the closest
+          city scores 1,000.
         </p>
 
         <button class="btn" type="button" id="btn-begin">Begin</button>
@@ -71,7 +72,7 @@
         </header>
 
         <div class="city-block city-block-from">
-          <p class="city-kicker" id="from-kicker">This side</p>
+          <p class="city-kicker" id="from-kicker">This city</p>
           <h2 class="city-name" id="from-name">Chicago</h2>
           <p class="city-meta" id="from-meta">41.9°N 87.6°W · United States</p>
         </div>
@@ -84,7 +85,7 @@
             role="img"
             aria-labelledby="planet-caption"
           >
-            <title id="planet-caption">Cross-section of Earth with a borehole between cities</title>
+            <title id="planet-caption">Cross-section of Earth between two cities</title>
             <defs>
               <radialGradient id="coreGlow" cx="42%" cy="40%" r="70%">
                 <stop offset="0%" stop-color="#F3D78A" />
@@ -114,7 +115,7 @@
         </div>
 
         <div class="city-block city-block-to" id="to-block">
-          <p class="city-kicker" id="to-kicker">The far side</p>
+          <p class="city-kicker" id="to-kicker">Opposite</p>
           <form class="guess-form" id="guess-form" autocomplete="off">
             <label class="visually-hidden" for="guess-input">Name the opposite city</label>
             <div class="guess-field">
@@ -136,8 +137,8 @@
             </div>
             <p class="guess-error" id="guess-error" role="alert" hidden></p>
             <div class="guess-actions">
-              <button class="btn" type="submit" id="btn-bore">Send it through</button>
-              <button class="btn-text" type="button" id="btn-skip">Skip this city</button>
+              <button class="btn" type="submit" id="btn-bore">Guess</button>
+              <button class="btn-text" type="button" id="btn-skip">Skip</button>
             </div>
           </form>
 
@@ -153,13 +154,13 @@
       </section>
 
       <section class="screen screen-finale" id="screen-finale" data-screen="finale" hidden>
-        <p class="eyebrow">Eight tunnels</p>
+        <p class="eyebrow">Your score</p>
         <h1 class="finale-score" id="finale-score">0</h1>
         <p class="finale-cap" id="finale-cap">of 8,000</p>
         <p class="finale-line" id="finale-line"></p>
         <ol class="tunnels" id="tunnels"></ol>
         <div class="finale-actions">
-          <button class="btn" type="button" id="btn-again">Bore again</button>
+          <button class="btn" type="button" id="btn-again">Play again</button>
         </div>
       </section>
     </main>

@@ -67,10 +67,11 @@ const Geo = (() => {
   }
 
   const POINTS = {
-    continent: 250,
-    country: 350,
-    city: 400,
+    distance: 800,
+    continent: 75,
+    country: 125,
   };
+  const DISTANCE_SCALE_KM = 1400;
 
   function emptyScore() {
     return {
@@ -78,16 +79,23 @@ const Geo = (() => {
       country: false,
       city: false,
       points: 0,
-      parts: { continent: 0, country: 0, city: 0 },
+      parts: { distance: 0, continent: 0, country: 0 },
     };
   }
 
-  function scoreGuess(guess, official) {
+  function scoreGuess(guess, official, antipode) {
     const result = emptyScore();
-    if (!guess || !official) return result;
+    if (!guess || !official || !antipode) return result;
     result.city = guess.id === official.id;
     result.country = result.city || guess.country === official.country;
     result.continent = result.country || guess.continent === official.continent;
+
+    const bestDist = haversine(official, antipode);
+    const guessDist = haversine(guess, antipode);
+    const waste = Math.max(0, guessDist - bestDist);
+    result.parts.distance = Math.round(POINTS.distance * Math.exp(-waste / DISTANCE_SCALE_KM));
+    result.points += result.parts.distance;
+
     if (result.continent) {
       result.parts.continent = POINTS.continent;
       result.points += POINTS.continent;
@@ -95,10 +103,6 @@ const Geo = (() => {
     if (result.country) {
       result.parts.country = POINTS.country;
       result.points += POINTS.country;
-    }
-    if (result.city) {
-      result.parts.city = POINTS.city;
-      result.points += POINTS.city;
     }
     return result;
   }
@@ -110,7 +114,7 @@ const Geo = (() => {
     LOWER_MANTLE,
     UPPER_MANTLE,
     POINTS,
-    MAX_ROUND: POINTS.continent + POINTS.country + POINTS.city,
+    MAX_ROUND: POINTS.distance + POINTS.continent + POINTS.country,
     haversine,
     antipode,
     centralAngle,
