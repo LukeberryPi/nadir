@@ -66,9 +66,41 @@ const Geo = (() => {
     return { city: best, distance: bestD };
   }
 
-  function scoreGuess(guessDist, bestDist) {
-    const waste = Math.max(0, guessDist - bestDist);
-    return Math.round(1000 * Math.exp(-waste / 1400));
+  const POINTS = {
+    continent: 250,
+    country: 350,
+    city: 400,
+  };
+
+  function emptyScore() {
+    return {
+      continent: false,
+      country: false,
+      city: false,
+      points: 0,
+      parts: { continent: 0, country: 0, city: 0 },
+    };
+  }
+
+  function scoreGuess(guess, official) {
+    const result = emptyScore();
+    if (!guess || !official) return result;
+    result.city = guess.id === official.id;
+    result.country = result.city || guess.country === official.country;
+    result.continent = result.country || guess.continent === official.continent;
+    if (result.continent) {
+      result.parts.continent = POINTS.continent;
+      result.points += POINTS.continent;
+    }
+    if (result.country) {
+      result.parts.country = POINTS.country;
+      result.points += POINTS.country;
+    }
+    if (result.city) {
+      result.parts.city = POINTS.city;
+      result.points += POINTS.city;
+    }
+    return result;
   }
 
   return {
@@ -77,6 +109,8 @@ const Geo = (() => {
     OUTER_CORE,
     LOWER_MANTLE,
     UPPER_MANTLE,
+    POINTS,
+    MAX_ROUND: POINTS.continent + POINTS.country + POINTS.city,
     haversine,
     antipode,
     centralAngle,
@@ -85,6 +119,7 @@ const Geo = (() => {
     formatCoord,
     formatKm,
     nearestCity,
+    emptyScore,
     scoreGuess,
     toDeg,
   };

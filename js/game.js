@@ -26,6 +26,7 @@
     toMeta: document.getElementById("to-meta"),
     verdict: document.getElementById("verdict"),
     points: document.getElementById("points"),
+    scoreBreak: document.getElementById("score-break"),
     next: document.getElementById("btn-next"),
     lines: document.getElementById("planet-lines"),
     dots: document.getElementById("planet-dots"),
@@ -216,21 +217,26 @@
 
   function drawPlanet(prompt, guess, best, revealed) {
     const start = polar(-Math.PI / 2);
-    const trueEnd = polar(Math.PI / 2);
+    const officialAngle =
+      revealed && best
+        ? -Math.PI / 2 + Geo.centralAngle(prompt, best)
+        : Math.PI / 2;
+    const officialEnd = polar(officialAngle);
     const guessAngle = guess
       ? -Math.PI / 2 + Geo.centralAngle(prompt, guess)
-      : Math.PI / 2;
+      : officialAngle;
     const guessEnd = polar(guessAngle);
 
     const guessLen = Math.hypot(guessEnd.x - start.x, guessEnd.y - start.y).toFixed(1);
-    const truePath = `M ${start.x.toFixed(1)} ${start.y.toFixed(1)} L ${trueEnd.x.toFixed(1)} ${trueEnd.y.toFixed(1)}`;
+    const officialPath = `M ${start.x.toFixed(1)} ${start.y.toFixed(1)} L ${officialEnd.x.toFixed(1)} ${officialEnd.y.toFixed(1)}`;
     const guessPath = `M ${start.x.toFixed(1)} ${start.y.toFixed(1)} L ${guessEnd.x.toFixed(1)} ${guessEnd.y.toFixed(1)}`;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const showGuessPath = revealed && guess && (!best || guess.id !== best.id);
 
     els.lines.innerHTML = `
-      <path class="true-bore" d="${truePath}"></path>
+      <path class="true-bore" d="${officialPath}"></path>
       ${
-        revealed && guess
+        showGuessPath
           ? `<path class="guess-bore" d="${guessPath}" style="stroke-dasharray:${guessLen};stroke-dashoffset:${guessLen}"></path>
              ${
                reduceMotion
@@ -239,27 +245,35 @@
                       <animateMotion dur="1.05s" fill="freeze" path="${guessPath}" />
                     </circle>`
              }`
-          : ""
+          : revealed && guess
+            ? `<path class="guess-bore" d="${officialPath}" style="stroke-dasharray:${guessLen};stroke-dashoffset:${guessLen}"></path>
+               ${
+                 reduceMotion
+                   ? ""
+                   : `<circle class="spark" r="4" fill="#fff6df">
+                        <animateMotion dur="1.05s" fill="freeze" path="${officialPath}" />
+                      </circle>`
+               }`
+            : ""
       }
     `;
 
     const dots = [
       `<circle cx="${start.x}" cy="${start.y}" r="5.2" fill="#eef3f5"></circle>`,
     ];
-    if (revealed && guess) {
+    if (revealed && best) {
       dots.push(
-        `<circle cx="${guessEnd.x}" cy="${guessEnd.y}" r="5.2" fill="#f3e2c0"></circle>`
+        `<circle cx="${officialEnd.x}" cy="${officialEnd.y}" r="5.2" fill="#f3e2c0"></circle>`
       );
-      if (best && (!guess || best.id !== guess.id)) {
-        const bestAngle = -Math.PI / 2 + Geo.centralAngle(prompt, best);
-        const bestEnd = polar(bestAngle);
+      if (showGuessPath) {
         dots.push(
-          `<circle cx="${bestEnd.x}" cy="${bestEnd.y}" r="4" fill="#eef3f5" stroke="#3e7d8b" stroke-width="1.4"></circle>`
+          `<circle cx="${guessEnd.x}" cy="${guessEnd.y}" r="4" fill="#eef3f5" stroke="#3e7d8b" stroke-width="1.4"></circle>`
         );
       }
     } else {
+      const idle = polar(Math.PI / 2);
       dots.push(
-        `<circle cx="${trueEnd.x}" cy="${trueEnd.y}" r="4.4" fill="none" stroke="#eef3f5" stroke-width="1.4" stroke-dasharray="2 2"></circle>`
+        `<circle cx="${idle.x}" cy="${idle.y}" r="4.4" fill="none" stroke="#eef3f5" stroke-width="1.4" stroke-dasharray="2 2"></circle>`
       );
     }
     els.dots.innerHTML = dots.join("");
@@ -284,56 +298,64 @@
     els.input.focus();
   }
 
-  function describe(round, guess, points, skipped) {
-    const antipode = round.antipode;
+  function describe(round, guess, tally, skipped) {
     const best = round.best;
-    const miss = guess ? Geo.chordMissKm(round.city, guess) : Geo.EARTH_KM;
-    const layer = Geo.layerName(miss);
-    const fromTrue = guess ? Geo.haversine(guess, antipode) : null;
+    const opposite = `The opposite city is ${best.name}, ${best.country}.`;
 
-    if (skipped) {
-      return `Skipped. The closest city in the atlas is ${best.label}, ${Geo.formatKm(round.bestDist)} from the true antipode.`;
-    }
+    if (skipped) return opposite;
 
-    const bits = [];
-    if (guess.id === best.id) {
-      bits.push(`You named the closest city in the atlas.`);
-    } else {
-      bits.push(
-        `Closest in the atlas is ${best.name}, ${Geo.formatKm(round.bestDist)} from the true point.`
-      );
+    if (tally.city) {
+      return `${opposite} You named it.`;
     }
-    bits.push(
-      `Your borehole passed through the ${layer.toLowerCase()}. The true antipode is ${Geo.formatKm(fromTrue)} from ${guess.name}.`
-    );
-    if (points === 0) bits.push("Too far to score.");
-    return bits.join(" ");
+    if (tally.country) {
+      return `${opposite} You had the country. You named ${guess.name}.`;
+    }
+    if (tally.continent) {
+      return `${opposite} You had the continent (${best.continent}). You named ${guess.label}.`;
+    }
+    return `${opposite} You named ${guess.label}.`;
+  }
+
+  function renderScoreBreak(tally) {
+    const rows = [
+      ["Continent", tally.parts.continent],
+      ["Country", tally.parts.country],
+      ["City", tally.parts.city],
+    ];
+    els.scoreBreak.innerHTML = "";
+    rows.forEach(([label, value]) => {
+      const li = document.createElement("li");
+      if (!value) li.className = "is-miss";
+      li.innerHTML = `<span>${label}</span><span>${value ? `+${value}` : "—"}</span>`;
+      els.scoreBreak.appendChild(li);
+    });
   }
 
   function reveal(guess, skipped) {
     const round = state.rounds[state.index];
-    const guessDist = guess ? Geo.haversine(guess, round.antipode) : Infinity;
-    const points = skipped || !guess ? 0 : Geo.scoreGuess(guessDist, round.bestDist);
-    const shown = guess || round.best;
+    const tally = skipped || !guess ? Geo.emptyScore() : Geo.scoreGuess(guess, round.best);
+    const official = round.best;
 
-    state.score += points;
+    state.score += tally.points;
     state.history.push({
       from: round.city,
       guess: guess,
       best: round.best,
-      points,
+      points: tally.points,
+      tally,
       skipped,
     });
 
     screens.play.classList.add("is-revealed");
     els.form.hidden = true;
     els.reveal.hidden = false;
-    els.toName.textContent = shown.name;
-    els.toMeta.textContent = `${Geo.formatCoord(shown.lat, shown.lon)}  ·  ${shown.country}`;
-    els.verdict.textContent = describe(round, guess, points, skipped);
-    els.points.textContent = skipped ? "Skipped" : `+${points.toLocaleString("en-US")}`;
+    els.toName.textContent = official.name;
+    els.toMeta.textContent = `${Geo.formatCoord(official.lat, official.lon)}  ·  ${official.country}`;
+    els.verdict.textContent = describe(round, guess, tally, skipped);
+    renderScoreBreak(tally);
+    els.points.textContent = skipped ? "Skipped" : `+${tally.points.toLocaleString("en-US")}`;
     els.runningScore.textContent = state.score.toLocaleString("en-US");
-    drawPlanet(round.city, shown, round.best, true);
+    drawPlanet(round.city, guess, official, true);
     els.next.focus();
   }
 
@@ -372,7 +394,7 @@
     show("finale");
     els.finaleScore.textContent = state.score.toLocaleString("en-US");
     const best = state.history.slice().sort((a, b) => b.points - a.points)[0];
-    const hits = state.history.filter((h) => h.points >= 850).length;
+    const hits = state.history.filter((h) => h.tally && h.tally.city).length;
     if (best && best.guess) {
       els.finaleLine.textContent =
         hits >= 4
@@ -394,7 +416,7 @@
       pts.textContent = row.skipped ? "—" : row.points.toLocaleString("en-US");
       const meta = document.createElement("p");
       meta.className = "tunnel-meta";
-      meta.textContent = `Closest: ${row.best.label}`;
+      meta.textContent = `Opposite: ${row.best.label}`;
       li.append(pair, pts, meta);
       els.tunnels.appendChild(li);
     });
