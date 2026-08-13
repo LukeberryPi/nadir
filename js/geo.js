@@ -52,20 +52,6 @@ const Geo = (() => {
     return `${Math.round(km).toLocaleString("en-US")} km`;
   }
 
-  function oceanName(point) {
-    const { lat, lon } = point;
-    if (lat > 66) return "the Arctic Ocean";
-    if (lat < -60) return "the Southern Ocean";
-    if (lon > 20 && lon < 145 && lat < 30 && lat > -60) {
-      if (lon < 100 || lat < 10) return "the Indian Ocean";
-    }
-    if (lon > 100 || lon < -70) {
-      if (!(lon > -70 && lon < 20)) return "the Pacific Ocean";
-    }
-    if (lon > -70 && lon < 20) return "the Atlantic Ocean";
-    return "open ocean";
-  }
-
   function nearestCity(point, cities, excludeId) {
     let best = null;
     let bestD = Infinity;
@@ -98,7 +84,6 @@ const Geo = (() => {
     layerName,
     formatCoord,
     formatKm,
-    oceanName,
     nearestCity,
     scoreGuess,
     toDeg,
