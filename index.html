@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nadir — name the city through the planet</title>
+    <meta
+      name="description"
+      content="A city is named. You name the city that sits most opposite, through the Earth."
+    />
+    <meta name="theme-color" content="#dce6ea" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <a class="skip-link" href="#main">Skip to game</a>
+
+    <main id="main" class="app">
+      <section class="screen screen-intro" id="screen-intro" data-screen="intro">
+        <p class="eyebrow">A game of antipodes</p>
+        <h1 class="wordmark">Nadir</h1>
+        <p class="lede">
+          A city is named. You name the city that sits most opposite —
+          twelve thousand kilometres through rock, nickel, and heat.
+        </p>
+
+        <div class="intro-planet" aria-hidden="true">
+          <p class="intro-pole intro-pole-top">this side</p>
+          <svg class="planet-svg" viewBox="0 0 320 320" role="img">
+            <defs>
+              <radialGradient id="coreGlowIntro" cx="42%" cy="40%" r="70%">
+                <stop offset="0%" stop-color="#F3D78A" />
+                <stop offset="55%" stop-color="#E0A84A" />
+                <stop offset="100%" stop-color="#C17F3A" />
+              </radialGradient>
+              <radialGradient id="mantleIntro" cx="45%" cy="40%" r="80%">
+                <stop offset="0%" stop-color="#C46A42" />
+                <stop offset="100%" stop-color="#7A3A2C" />
+              </radialGradient>
+            </defs>
+            <circle class="layer-mantle" cx="160" cy="160" r="132" fill="url(#mantleIntro)" />
+            <circle class="layer-outer" cx="160" cy="160" r="76" fill="#D4894A" />
+            <circle class="layer-inner" cx="160" cy="160" r="28" fill="url(#coreGlowIntro)" />
+            <circle class="layer-crust" cx="160" cy="160" r="132" fill="none" stroke="#D4C4A8" stroke-width="7" />
+            <line class="bore-hint" x1="160" y1="28" x2="160" y2="292" />
+            <circle cx="160" cy="28" r="5" fill="#E4EBEE" />
+            <circle cx="160" cy="292" r="5" fill="#E4EBEE" />
+          </svg>
+          <p class="intro-pole intro-pole-bottom">the far side</p>
+        </div>
+
+        <p class="how">
+          The true opposite is a point, not a pair. If it falls in open ocean,
+          the nearest city in the atlas is the answer. Naming that city scores
+          1,000. Farther guesses fall away fast.
+        </p>
+
+        <button class="btn" type="button" id="btn-begin">Begin</button>
+      </section>
+
+      <section class="screen screen-play" id="screen-play" data-screen="play" hidden>
+        <header class="play-bar">
+          <p class="brand">Nadir</p>
+          <p class="round-mark" id="round-mark">1 of 8</p>
+          <p class="running-score" id="running-score">0</p>
+        </header>
+
+        <div class="city-block city-block-from">
+          <p class="city-kicker" id="from-kicker">This side</p>
+          <h2 class="city-name" id="from-name">Chicago</h2>
+          <p class="city-meta" id="from-meta">41.9°N 87.6°W · United States</p>
+        </div>
+
+        <div class="planet-wrap" id="planet-wrap">
+          <svg
+            class="planet-svg"
+            id="planet"
+            viewBox="0 0 320 320"
+            role="img"
+            aria-labelledby="planet-caption"
+          >
+            <title id="planet-caption">Cross-section of Earth with a borehole between cities</title>
+            <defs>
+              <radialGradient id="coreGlow" cx="42%" cy="40%" r="70%">
+                <stop offset="0%" stop-color="#F3D78A" />
+                <stop offset="55%" stop-color="#E0A84A" />
+                <stop offset="100%" stop-color="#C17F3A" />
+              </radialGradient>
+              <radialGradient id="mantleFill" cx="46%" cy="38%" r="78%">
+                <stop offset="0%" stop-color="#C46A42" />
+                <stop offset="100%" stop-color="#6E3328" />
+              </radialGradient>
+              <filter id="corePulse" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <circle cx="160" cy="160" r="132" fill="url(#mantleFill)" />
+            <circle cx="160" cy="160" r="76.5" fill="#D4894A" />
+            <circle cx="160" cy="160" r="26.8" fill="url(#coreGlow)" filter="url(#corePulse)" />
+            <circle cx="160" cy="160" r="132" fill="none" stroke="#D4C4A8" stroke-width="7" />
+            <circle cx="160" cy="160" r="76.5" fill="none" stroke="#B86A38" stroke-width="0.6" opacity="0.5" />
+            <g id="planet-lines"></g>
+            <g id="planet-dots"></g>
+          </svg>
+        </div>
+
+        <div class="city-block city-block-to" id="to-block">
+          <p class="city-kicker" id="to-kicker">The far side</p>
+          <form class="guess-form" id="guess-form" autocomplete="off">
+            <label class="visually-hidden" for="guess-input">Name the opposite city</label>
+            <div class="guess-field">
+              <input
+                id="guess-input"
+                class="guess-input"
+                name="guess"
+                type="text"
+                placeholder="Name the opposite city"
+                autocapitalize="words"
+                autocorrect="off"
+                spellcheck="false"
+                role="combobox"
+                aria-expanded="false"
+                aria-controls="suggest-list"
+                aria-autocomplete="list"
+              />
+              <ul class="suggest" id="suggest-list" role="listbox" hidden></ul>
+            </div>
+            <p class="guess-error" id="guess-error" role="alert" hidden></p>
+            <div class="guess-actions">
+              <button class="btn" type="submit" id="btn-bore">Send it through</button>
+              <button class="btn-text" type="button" id="btn-skip">Skip this city</button>
+            </div>
+          </form>
+
+          <div class="reveal" id="reveal" hidden>
+            <h2 class="city-name" id="to-name"></h2>
+            <p class="city-meta" id="to-meta"></p>
+            <p class="verdict" id="verdict"></p>
+            <p class="points" id="points"></p>
+            <button class="btn" type="button" id="btn-next">Next city</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen screen-finale" id="screen-finale" data-screen="finale" hidden>
+        <p class="eyebrow">Eight tunnels</p>
+        <h1 class="finale-score" id="finale-score">0</h1>
+        <p class="finale-cap" id="finale-cap">of 8,000</p>
+        <p class="finale-line" id="finale-line"></p>
+        <ol class="tunnels" id="tunnels"></ol>
+        <div class="finale-actions">
+          <button class="btn" type="button" id="btn-again">Bore again</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/geo.js"></script>
+    <script src="js/cities.js"></script>
+    <script src="js/game.js"></script>
+  </body>
+</html>
