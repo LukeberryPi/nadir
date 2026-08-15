@@ -16,6 +16,14 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+      }
+    </script>
   </head>
   <body>
     <div class="grain" aria-hidden="true"></div>
@@ -56,9 +64,9 @@
         </div>
 
         <p class="how">
-          Most of the score is how close you get to the other side of the Earth.
-          The right continent and country add a few points. Naming the closest
-          city scores 1,000.
+          Everyone gets the same eight cities each UTC day. Most of the score
+          is how close you get to the other side of the Earth. The right
+          continent and country add a few points.
         </p>
 
         <button class="btn" type="button" id="btn-begin">Begin</button>
@@ -78,40 +86,14 @@
         </div>
 
         <div class="planet-wrap" id="planet-wrap">
-          <svg
-            class="planet-svg"
-            id="planet"
-            viewBox="0 0 320 320"
-            role="img"
-            aria-labelledby="planet-caption"
-          >
-            <title id="planet-caption">Cross-section of Earth between two cities</title>
-            <defs>
-              <radialGradient id="coreGlow" cx="42%" cy="40%" r="70%">
-                <stop offset="0%" stop-color="#F3D78A" />
-                <stop offset="55%" stop-color="#E0A84A" />
-                <stop offset="100%" stop-color="#C17F3A" />
-              </radialGradient>
-              <radialGradient id="mantleFill" cx="46%" cy="38%" r="78%">
-                <stop offset="0%" stop-color="#C46A42" />
-                <stop offset="100%" stop-color="#6E3328" />
-              </radialGradient>
-              <filter id="corePulse" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="2" result="b" />
-                <feMerge>
-                  <feMergeNode in="b" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-            <circle cx="160" cy="160" r="132" fill="url(#mantleFill)" />
-            <circle cx="160" cy="160" r="76.5" fill="#D4894A" />
-            <circle cx="160" cy="160" r="26.8" fill="url(#coreGlow)" filter="url(#corePulse)" />
-            <circle cx="160" cy="160" r="132" fill="none" stroke="#D4C4A8" stroke-width="7" />
-            <circle cx="160" cy="160" r="76.5" fill="none" stroke="#B86A38" stroke-width="0.6" opacity="0.5" />
-            <g id="planet-lines"></g>
-            <g id="planet-dots"></g>
-          </svg>
+          <canvas
+            id="globe"
+            class="globe-canvas"
+            width="640"
+            height="640"
+            aria-label="Rotatable Earth. Green is the true opposite, red is your guess."
+          ></canvas>
+          <p class="globe-hint" id="globe-hint">Drag to turn</p>
         </div>
 
         <div class="city-block city-block-to" id="to-block">
@@ -159,6 +141,11 @@
         <p class="finale-cap" id="finale-cap">of 8,000</p>
         <p class="finale-line" id="finale-line"></p>
         <ol class="tunnels" id="tunnels"></ol>
+        <div class="share-actions">
+          <button class="btn" type="button" id="btn-copy">Copy results</button>
+          <button class="btn-text" type="button" id="btn-tweet">Share on X</button>
+        </div>
+        <p class="share-status" id="share-status" hidden></p>
         <div class="finale-actions">
           <button class="btn" type="button" id="btn-again">Play again</button>
         </div>
@@ -167,6 +154,9 @@
 
     <script src="js/geo.js"></script>
     <script src="js/cities.js"></script>
-    <script src="js/game.js"></script>
+    <script src="js/daily.js"></script>
+    <script src="js/share.js"></script>
+    <script type="module" src="js/globe.js"></script>
+    <script defer src="js/game.js"></script>
   </body>
 </html>

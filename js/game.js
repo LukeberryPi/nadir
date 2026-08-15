@@ -1,8 +1,5 @@
 (() => {
-  const ROUNDS = 8;
-  const CX = 160;
-  const CY = 160;
-  const R = 132;
+  const ROUNDS = Daily.ROUNDS;
 
   const screens = {
     intro: document.getElementById("screen-intro"),
@@ -28,15 +25,20 @@
     points: document.getElementById("points"),
     scoreBreak: document.getElementById("score-break"),
     next: document.getElementById("btn-next"),
-    lines: document.getElementById("planet-lines"),
-    dots: document.getElementById("planet-dots"),
+    globe: document.getElementById("globe"),
+    globeHint: document.getElementById("globe-hint"),
     finaleScore: document.getElementById("finale-score"),
+    finaleCap: document.getElementById("finale-cap"),
     finaleLine: document.getElementById("finale-line"),
     tunnels: document.getElementById("tunnels"),
     again: document.getElementById("btn-again"),
+    copy: document.getElementById("btn-copy"),
+    tweet: document.getElementById("btn-tweet"),
+    shareStatus: document.getElementById("share-status"),
   };
 
   const state = {
+    dateKey: Daily.utcDateKey(),
     rounds: [],
     index: 0,
     score: 0,
@@ -44,6 +46,8 @@
     selected: null,
     activeSuggest: -1,
     matches: [],
+    revealed: false,
+    finished: false,
   };
 
   function show(name) {
@@ -52,80 +56,52 @@
     });
   }
 
-  function shuffle(list) {
-    const arr = list.slice();
-    for (let i = arr.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
+  function cityById(id) {
+    return CITIES.find((city) => city.id === id) || null;
   }
 
-  function polar(angle) {
-    return {
-      x: CX + R * Math.cos(angle),
-      y: CY + R * Math.sin(angle),
-    };
+  function persist() {
+    Daily.saveProgress(state.dateKey, {
+      index: state.index,
+      score: state.score,
+      revealed: state.revealed,
+      finished: state.finished,
+      history: state.history.map((row) => ({
+        fromId: row.from.id,
+        guessId: row.guess ? row.guess.id : null,
+        bestId: row.best.id,
+        points: row.points,
+        tally: row.tally,
+        skipped: row.skipped,
+      })),
+    });
   }
 
-  function catalog() {
-    return CITIES.map((city) => {
-      const antipode = Geo.antipode(city);
-      const nearest = Geo.nearestCity(antipode, CITIES, city.id);
-      return {
-        city,
-        antipode,
-        best: nearest.city,
-        bestDist: nearest.distance,
-      };
-    }).filter((entry) => entry.best && entry.bestDist < 3400);
+  function restoreHistory(saved) {
+    return (saved.history || []).map((row) => ({
+      from: cityById(row.fromId),
+      guess: row.guessId == null ? null : cityById(row.guessId),
+      best: cityById(row.bestId),
+      points: row.points,
+      tally: row.tally,
+      skipped: row.skipped,
+    }));
   }
 
-  function pickRounds() {
-    const pool = catalog();
-    const easy = shuffle(pool.filter((p) => p.bestDist < 800));
-    const mid = shuffle(pool.filter((p) => p.bestDist >= 800 && p.bestDist < 1800));
-    const hard = shuffle(pool.filter((p) => p.bestDist >= 1800));
-    const chosen = [];
-    const used = new Set();
+  let globeQueue = Promise.resolve();
 
-    function take(bucket, count) {
-      const target = chosen.length + count;
-      for (const item of bucket) {
-        if (chosen.length >= target) break;
-        if (used.has(item.city.id) || used.has(item.best.id)) continue;
-        chosen.push(item);
-        used.add(item.city.id);
-        used.add(item.best.id);
-      }
-    }
-
-    const signatures = new Set([
-      "Chicago",
-      "Shanghai",
-      "Perth",
-      "Madrid",
-      "Lima",
-      "Honolulu",
-      "Auckland",
-      "Christchurch",
-      "Quito",
-      "Santiago",
-      "Wellington",
-      "Hong Kong",
-      "Buenos Aires",
-      "Singapore",
-      "New York",
-      "Tokyo",
-      "London",
-    ]);
-    take(shuffle(pool.filter((p) => signatures.has(p.city.name))), 3);
-    take(easy, 2);
-    take(mid, 2);
-    take(hard, 2);
-    take(shuffle(pool), ROUNDS - chosen.length);
-
-    return shuffle(chosen.slice(0, ROUNDS));
+  function withGlobe(fn) {
+    globeQueue = globeQueue
+      .then(async () => {
+        const start = Date.now();
+        while (!window.Globe && Date.now() - start < 8000) {
+          await new Promise((resolve) => setTimeout(resolve, 30));
+        }
+        if (!window.Globe) return;
+        await fn(window.Globe);
+      })
+      .catch(() => {});
+    return globeQueue;
   }
 
   function normalize(text) {
@@ -215,75 +191,12 @@
     return hits;
   }
 
-  function drawPlanet(prompt, guess, best, revealed) {
-    const start = polar(-Math.PI / 2);
-    const officialAngle =
-      revealed && best
-        ? -Math.PI / 2 + Geo.centralAngle(prompt, best)
-        : Math.PI / 2;
-    const officialEnd = polar(officialAngle);
-    const guessAngle = guess
-      ? -Math.PI / 2 + Geo.centralAngle(prompt, guess)
-      : officialAngle;
-    const guessEnd = polar(guessAngle);
-
-    const guessLen = Math.hypot(guessEnd.x - start.x, guessEnd.y - start.y).toFixed(1);
-    const officialPath = `M ${start.x.toFixed(1)} ${start.y.toFixed(1)} L ${officialEnd.x.toFixed(1)} ${officialEnd.y.toFixed(1)}`;
-    const guessPath = `M ${start.x.toFixed(1)} ${start.y.toFixed(1)} L ${guessEnd.x.toFixed(1)} ${guessEnd.y.toFixed(1)}`;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const showGuessPath = revealed && guess && (!best || guess.id !== best.id);
-
-    els.lines.innerHTML = `
-      <path class="true-bore" d="${officialPath}"></path>
-      ${
-        showGuessPath
-          ? `<path class="guess-bore" d="${guessPath}" style="stroke-dasharray:${guessLen};stroke-dashoffset:${guessLen}"></path>
-             ${
-               reduceMotion
-                 ? ""
-                 : `<circle class="spark" r="4" fill="#fff6df">
-                      <animateMotion dur="1.05s" fill="freeze" path="${guessPath}" />
-                    </circle>`
-             }`
-          : revealed && guess
-            ? `<path class="guess-bore" d="${officialPath}" style="stroke-dasharray:${guessLen};stroke-dashoffset:${guessLen}"></path>
-               ${
-                 reduceMotion
-                   ? ""
-                   : `<circle class="spark" r="4" fill="#fff6df">
-                        <animateMotion dur="1.05s" fill="freeze" path="${officialPath}" />
-                      </circle>`
-               }`
-            : ""
-      }
-    `;
-
-    const dots = [
-      `<circle cx="${start.x}" cy="${start.y}" r="5.2" fill="#eef3f5"></circle>`,
-    ];
-    if (revealed && best) {
-      dots.push(
-        `<circle cx="${officialEnd.x}" cy="${officialEnd.y}" r="5.2" fill="#f3e2c0"></circle>`
-      );
-      if (showGuessPath) {
-        dots.push(
-          `<circle cx="${guessEnd.x}" cy="${guessEnd.y}" r="4" fill="#eef3f5" stroke="#3e7d8b" stroke-width="1.4"></circle>`
-        );
-      }
-    } else {
-      const idle = polar(Math.PI / 2);
-      dots.push(
-        `<circle cx="${idle.x}" cy="${idle.y}" r="4.4" fill="none" stroke="#eef3f5" stroke-width="1.4" stroke-dasharray="2 2"></circle>`
-      );
-    }
-    els.dots.innerHTML = dots.join("");
-  }
-
   function renderRound() {
     const round = state.rounds[state.index];
     const city = round.city;
+    state.revealed = false;
     screens.play.classList.remove("is-revealed");
-    els.roundMark.textContent = `${state.index + 1} of ${ROUNDS}`;
+    els.roundMark.textContent = `${Daily.formatDateLabel(state.dateKey)} · ${state.index + 1} of ${ROUNDS}`;
     els.runningScore.textContent = state.score.toLocaleString("en-US");
     els.fromName.textContent = city.name;
     els.fromMeta.textContent = `${Geo.formatCoord(city.lat, city.lon)}  ·  ${city.country}`;
@@ -293,8 +206,12 @@
     state.selected = null;
     setSuggest([]);
     els.error.hidden = true;
-    drawPlanet(city, null, round.best, false);
+    els.globeHint.textContent = "Drag to turn";
     els.next.textContent = state.index === ROUNDS - 1 ? "See scores" : "Next city";
+    withGlobe(async (globe) => {
+      await globe.mount(els.globe);
+      globe.setPrompt(city);
+    });
     els.input.focus();
   }
 
@@ -331,13 +248,38 @@
     });
   }
 
+  function paintReveal(guess, skipped, tally) {
+    const round = state.rounds[state.index];
+    const official = round.best;
+    screens.play.classList.add("is-revealed");
+    els.form.hidden = true;
+    els.reveal.hidden = false;
+    els.toName.textContent = official.name;
+    els.toMeta.textContent = `${Geo.formatCoord(official.lat, official.lon)}  ·  ${official.country}`;
+    els.verdict.textContent = describe(round, guess, tally, skipped);
+    renderScoreBreak(tally);
+    els.points.textContent = skipped ? "Skipped" : `+${tally.points.toLocaleString("en-US")}`;
+    els.runningScore.textContent = state.score.toLocaleString("en-US");
+    els.globeHint.textContent = "Green is the true opposite. Red is your guess.";
+    state.revealed = true;
+    withGlobe(async (globe) => {
+      await globe.mount(els.globe);
+      globe.reveal({
+        prompt: round.city,
+        official,
+        guess,
+        antipode: round.antipode,
+      });
+    });
+    els.next.focus();
+  }
+
   function reveal(guess, skipped) {
     const round = state.rounds[state.index];
     const tally =
       skipped || !guess
         ? Geo.emptyScore()
         : Geo.scoreGuess(guess, round.best, round.antipode);
-    const official = round.best;
 
     state.score += tally.points;
     state.history.push({
@@ -348,18 +290,8 @@
       tally,
       skipped,
     });
-
-    screens.play.classList.add("is-revealed");
-    els.form.hidden = true;
-    els.reveal.hidden = false;
-    els.toName.textContent = official.name;
-    els.toMeta.textContent = `${Geo.formatCoord(official.lat, official.lon)}  ·  ${official.country}`;
-    els.verdict.textContent = describe(round, guess, tally, skipped);
-    renderScoreBreak(tally);
-    els.points.textContent = skipped ? "Skipped" : `+${tally.points.toLocaleString("en-US")}`;
-    els.runningScore.textContent = state.score.toLocaleString("en-US");
-    drawPlanet(round.city, guess, official, true);
-    els.next.focus();
+    paintReveal(guess, skipped, tally);
+    persist();
   }
 
   function submitGuess() {
@@ -393,9 +325,22 @@
     reveal(guess, false);
   }
 
+  function shareText() {
+    return Share.formatResults({
+      dateKey: state.dateKey,
+      score: state.score,
+      maxScore: Geo.MAX_ROUND * ROUNDS,
+      history: state.history,
+    });
+  }
+
   function renderFinale() {
+    state.finished = true;
+    persist();
+    withGlobe((globe) => globe.dispose());
     show("finale");
     els.finaleScore.textContent = state.score.toLocaleString("en-US");
+    els.finaleCap.textContent = `of ${(Geo.MAX_ROUND * ROUNDS).toLocaleString("en-US")} · ${Daily.formatDateLabel(state.dateKey)}`;
     const best = state.history.slice().sort((a, b) => b.points - a.points)[0];
     const hits = state.history.filter((h) => h.tally && h.tally.city).length;
     if (best && best.guess) {
@@ -410,7 +355,7 @@
     els.tunnels.innerHTML = "";
     state.history.forEach((row) => {
       const li = document.createElement("li");
-      const named = row.skipped ? "Skipped" : row.guess.label;
+      const named = row.skipped || !row.guess ? "Skipped" : row.guess.label;
       const pair = document.createElement("p");
       pair.className = "tunnel-pair";
       pair.textContent = `${row.from.name}  →  ${named}`;
@@ -423,19 +368,44 @@
       li.append(pair, pts, meta);
       els.tunnels.appendChild(li);
     });
+    els.shareStatus.hidden = true;
   }
 
-  function startGame() {
-    state.rounds = pickRounds();
+  function startGame({ replay } = {}) {
+    state.dateKey = Daily.utcDateKey();
+    state.rounds = Daily.pickDailyRounds(CITIES, Geo, state.dateKey, ROUNDS);
+    const saved = replay ? null : Daily.loadProgress(state.dateKey);
+    if (saved && saved.history && saved.history.length) {
+      state.history = restoreHistory(saved).filter((row) => row.from && row.best);
+      state.score = saved.score || 0;
+      state.index = Math.min(saved.index || 0, ROUNDS - 1);
+      state.finished = Boolean(saved.finished);
+      if (state.finished) {
+        renderFinale();
+        return;
+      }
+      show("play");
+      renderRound();
+      if (saved.revealed) {
+        const last = state.history[state.history.length - 1];
+        if (last) paintReveal(last.guess, last.skipped, last.tally || Geo.emptyScore());
+      }
+      return;
+    }
     state.index = 0;
     state.score = 0;
     state.history = [];
+    state.revealed = false;
+    state.finished = false;
     show("play");
     renderRound();
   }
 
-  els.begin.addEventListener("click", startGame);
-  els.again.addEventListener("click", startGame);
+  els.begin.addEventListener("click", () => startGame());
+  els.again.addEventListener("click", () => {
+    Daily.clearProgress(state.dateKey);
+    startGame({ replay: true });
+  });
   els.skip.addEventListener("click", () => reveal(null, true));
   els.next.addEventListener("click", () => {
     if (state.index >= ROUNDS - 1) {
@@ -443,7 +413,17 @@
       return;
     }
     state.index += 1;
+    state.revealed = false;
+    persist();
     renderRound();
+  });
+  els.copy.addEventListener("click", async () => {
+    const ok = await Share.copy(shareText());
+    els.shareStatus.hidden = false;
+    els.shareStatus.textContent = ok ? "Copied." : "Couldn’t copy. Select the results and copy them yourself.";
+  });
+  els.tweet.addEventListener("click", () => {
+    window.open(Share.tweetUrl(shareText()), "_blank", "noopener,noreferrer");
   });
 
   els.form.addEventListener("submit", (event) => {

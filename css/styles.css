@@ -290,32 +290,30 @@ body {
 }
 
 .planet-wrap {
-  width: min(19.5rem, 78vw);
+  width: min(22rem, 86vw);
   margin: 1.1rem auto 0.9rem;
 }
 
-#planet-lines .true-bore {
-  fill: none;
-  stroke: var(--paper);
-  stroke-width: 1.5;
-  stroke-dasharray: 3 6;
-  stroke-linecap: round;
-  opacity: 0.75;
+.globe-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  cursor: grab;
+  touch-action: none;
+  border-radius: 50%;
 }
 
-#planet-lines .guess-bore {
-  fill: none;
-  stroke: #f3e2c0;
-  stroke-width: 2.4;
-  stroke-linecap: round;
+.globe-canvas:active {
+  cursor: grabbing;
 }
 
-.screen-play.is-revealed #planet-lines .guess-bore {
-  animation: bore-draw 1.05s cubic-bezier(0.2, 0.75, 0.2, 1) forwards;
-}
-
-#planet-lines .spark {
-  fill: #fff6df;
+.globe-hint {
+  margin: 0.55rem 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .layer-inner {
@@ -505,6 +503,20 @@ body {
   margin: 0;
 }
 
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem 1.25rem;
+  margin: 0 0 0.75rem;
+}
+
+.share-status {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .finale-actions {
   display: flex;
   justify-content: flex-start;
@@ -538,13 +550,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .layer-inner,
-  .screen-play.is-revealed #planet-lines .guess-bore,
-  .screen-play.is-revealed #planet-lines .spark {
+  .layer-inner {
     animation: none;
-  }
-
-  .screen-play.is-revealed #planet-lines .guess-bore {
-    stroke-dashoffset: 0;
   }
 }
