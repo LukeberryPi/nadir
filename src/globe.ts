@@ -1,20 +1,21 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import type { City, LatLon } from "./types.ts";
 
 const RADIUS = 1.55;
 const reduceMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-let renderer;
-let scene;
-let camera;
-let controls;
-let overlay;
-let animId;
-let canvasEl;
-let resizeObserver;
+let renderer: THREE.WebGLRenderer | null = null;
+let scene: THREE.Scene | null = null;
+let camera: THREE.PerspectiveCamera | null = null;
+let controls: OrbitControls | null = null;
+let overlay: THREE.Group | null = null;
+let animId = 0;
+let canvasEl: HTMLCanvasElement | null = null;
+let resizeObserver: ResizeObserver | null = null;
 
-function latLonToVec(lat, lon, radius = RADIUS) {
+function latLonToVec(lat: number, lon: number, radius = RADIUS) {
   const phi = ((90 - lat) * Math.PI) / 180;
   const theta = ((lon + 180) * Math.PI) / 180;
   return new THREE.Vector3(
@@ -24,7 +25,7 @@ function latLonToVec(lat, lon, radius = RADIUS) {
   );
 }
 
-function makeTube(from, to, color) {
+function makeTube(from: THREE.Vector3, to: THREE.Vector3, color: number) {
   const dir = to.clone().sub(from);
   const length = dir.length();
   const mesh = new THREE.Mesh(
@@ -41,7 +42,7 @@ function makeTube(from, to, color) {
   return mesh;
 }
 
-function makeMarker(position, color, size = 0.045) {
+function makeMarker(position: THREE.Vector3, color: number, size = 0.045) {
   const mesh = new THREE.Mesh(
     new THREE.SphereGeometry(size, 14, 14),
     new THREE.MeshBasicMaterial({ color, depthWrite: false })
@@ -50,13 +51,19 @@ function makeMarker(position, color, size = 0.045) {
   return mesh;
 }
 
+function disposeObject(object: THREE.Object3D) {
+  overlay?.remove(object);
+  if (!(object instanceof THREE.Mesh)) return;
+  object.geometry.dispose();
+  const material = object.material;
+  if (Array.isArray(material)) material.forEach((item) => item.dispose());
+  else material.dispose();
+}
+
 function clearOverlay() {
   if (!overlay) return;
   while (overlay.children.length) {
-    const child = overlay.children[0];
-    overlay.remove(child);
-    child.geometry?.dispose();
-    child.material?.dispose();
+    disposeObject(overlay.children[0]);
   }
 }
 
@@ -75,7 +82,7 @@ function tick() {
   if (renderer && scene && camera) renderer.render(scene, camera);
 }
 
-async function mount(canvas) {
+export async function mount(canvas: HTMLCanvasElement) {
   if (canvasEl === canvas && renderer) {
     sizeToCanvas();
     return;
@@ -108,7 +115,7 @@ async function mount(canvas) {
   key.position.set(3.2, 1.8, 4.4);
   scene.add(key);
 
-  let texture = null;
+  let texture: THREE.Texture | null = null;
   try {
     texture = await new THREE.TextureLoader().loadAsync("assets/earth.jpg");
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -118,7 +125,7 @@ async function mount(canvas) {
   const globe = new THREE.Mesh(
     new THREE.SphereGeometry(RADIUS, 64, 48),
     new THREE.MeshPhongMaterial({
-      map: texture || undefined,
+      map: texture,
       color: texture ? 0xffffff : 0x3e7d8b,
       transparent: true,
       opacity: 0.42,
@@ -136,7 +143,7 @@ async function mount(canvas) {
   tick();
 }
 
-function setPrompt(city) {
+export function setPrompt(city: City) {
   if (!overlay) return;
   clearOverlay();
   const point = latLonToVec(city.lat, city.lon);
@@ -144,7 +151,13 @@ function setPrompt(city) {
   if (controls) controls.autoRotate = !reduceMotion();
 }
 
-function reveal({ prompt, official, guess, antipode }) {
+export function reveal(opts: {
+  prompt: City;
+  official: City | null;
+  guess: City | null;
+  antipode: LatLon;
+}) {
+  const { prompt, official, guess, antipode } = opts;
   if (!overlay || !prompt || !antipode) return;
   clearOverlay();
   const start = latLonToVec(prompt.lat, prompt.lon);
@@ -166,7 +179,7 @@ function reveal({ prompt, official, guess, antipode }) {
   if (controls) controls.autoRotate = false;
 }
 
-function dispose() {
+export function dispose() {
   if (animId) cancelAnimationFrame(animId);
   animId = 0;
   resizeObserver?.disconnect();
@@ -181,5 +194,3 @@ function dispose() {
   overlay = null;
   canvasEl = null;
 }
-
-window.Globe = { mount, setPrompt, reveal, dispose };

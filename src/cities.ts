@@ -1,4 +1,6 @@
-const CITIES = [
+import type { City, CitySeed } from "./types.ts";
+
+const RAW: CitySeed[] = [
   { name: "New York", country: "United States", lat: 40.7128, lon: -74.006, aliases: ["nyc", "new york city"] },
   { name: "Los Angeles", country: "United States", lat: 34.0522, lon: -118.2437 },
   { name: "Chicago", country: "United States", lat: 41.8781, lon: -87.6298 },
@@ -309,7 +311,7 @@ const CITIES = [
   { name: "Praia", country: "Cabo Verde", lat: 14.933, lon: -23.5133 },
 ];
 
-const CONTINENT_BY_COUNTRY = {
+const CONTINENT_BY_COUNTRY: Record<string, string> = {
   "United States": "North America",
   Canada: "North America",
   Mexico: "North America",
@@ -438,26 +440,29 @@ const CONTINENT_BY_COUNTRY = {
   Samoa: "Oceania",
 };
 
-const CONTINENT_BY_CITY = {
+const CONTINENT_BY_CITY: Record<string, string> = {
   "Honolulu|United States": "Oceania",
   "Novosibirsk|Russia": "Asia",
   "Vladivostok|Russia": "Asia",
 };
 
-CITIES.forEach((city, i) => {
-  city.id = i;
-  city.label = `${city.name}, ${city.country}`;
-  city.continent =
-    CONTINENT_BY_CITY[`${city.name}|${city.country}`] ||
-    CONTINENT_BY_COUNTRY[city.country];
-  if (!city.continent) {
-    throw new Error(`No continent for ${city.label}`);
+export const CITIES: City[] = RAW.map((seed, i) => {
+  const label = `${seed.name}, ${seed.country}`;
+  const continent =
+    CONTINENT_BY_CITY[`${seed.name}|${seed.country}`] ||
+    CONTINENT_BY_COUNTRY[seed.country];
+  if (!continent) {
+    throw new Error(`No continent for ${label}`);
   }
-  const extra = (city.aliases || []).join(" ");
-  city.search = `${city.label} ${extra}`
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+  const extra = (seed.aliases || []).join(" ");
+  return {
+    ...seed,
+    id: i,
+    label,
+    continent,
+    search: `${label} ${extra}`
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase(),
+  };
 });
-
-if (typeof module !== "undefined") module.exports = CITIES;

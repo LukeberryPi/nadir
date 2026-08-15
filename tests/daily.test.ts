@@ -1,25 +1,25 @@
 import { describe, expect, test } from "bun:test";
-import Geo from "../js/geo.js";
-import CITIES from "../js/cities.js";
-import Daily from "../js/daily.js";
-import Share from "../js/share.js";
+import { CITIES } from "../src/cities.ts";
+import { pickDailyRounds } from "../src/daily.ts";
+import { emptyScore } from "../src/geo.ts";
+import { formatResults } from "../src/share.ts";
 
 describe("daily puzzle", () => {
   test("the same UTC date always yields the same eight city ids", () => {
-    const a = Daily.pickDailyRounds(CITIES, Geo, "2026-08-15");
-    const b = Daily.pickDailyRounds(CITIES, Geo, "2026-08-15");
+    const a = pickDailyRounds(CITIES, "2026-08-15");
+    const b = pickDailyRounds(CITIES, "2026-08-15");
     expect(a).toHaveLength(8);
     expect(a.map((row) => row.city.id)).toEqual(b.map((row) => row.city.id));
   });
 
   test("a different date yields a different set", () => {
-    const a = Daily.pickDailyRounds(CITIES, Geo, "2026-08-15").map((row) => row.city.id);
-    const b = Daily.pickDailyRounds(CITIES, Geo, "2026-08-16").map((row) => row.city.id);
+    const a = pickDailyRounds(CITIES, "2026-08-15").map((row) => row.city.id);
+    const b = pickDailyRounds(CITIES, "2026-08-16").map((row) => row.city.id);
     expect(a).not.toEqual(b);
   });
 
   test("no city is used twice in a day", () => {
-    const rounds = Daily.pickDailyRounds(CITIES, Geo, "2026-08-15");
+    const rounds = pickDailyRounds(CITIES, "2026-08-15");
     const ids = rounds.flatMap((row) => [row.city.id, row.best.id]);
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -27,10 +27,11 @@ describe("daily puzzle", () => {
 
 describe("share text", () => {
   test("includes the date and the total score", () => {
-    const chicago = CITIES.find((c) => c.name === "Chicago");
-    const perth = CITIES.find((c) => c.name === "Perth" && c.country === "Australia");
-    const london = CITIES.find((c) => c.name === "London");
-    const text = Share.formatResults({
+    const chicago = CITIES.find((place) => place.name === "Chicago");
+    const perth = CITIES.find((place) => place.name === "Perth" && place.country === "Australia");
+    const london = CITIES.find((place) => place.name === "London");
+    if (!chicago || !perth || !london) throw new Error("missing cities");
+    const text = formatResults({
       dateKey: "2026-08-15",
       score: 6240,
       maxScore: 8000,
@@ -46,7 +47,7 @@ describe("share text", () => {
           from: london,
           guess: null,
           points: 0,
-          tally: Geo.emptyScore(),
+          tally: emptyScore(),
           skipped: true,
         },
       ],
